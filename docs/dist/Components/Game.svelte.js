@@ -11,7 +11,7 @@ import {
 	safe_not_equal
 } from "../../snowpack/pkg/svelte/internal.js";
 
-import { Plants } from "../plants.js";
+import { Plants } from "../enums.js";
 
 function create_fragment(ctx) {
 	let div;
