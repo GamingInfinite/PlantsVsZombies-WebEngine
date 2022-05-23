@@ -1,5 +1,5 @@
 <script>
-  import { Plants } from "../plants.ts";
+  import { Plants } from "../enums.ts";
 
   export let boardType;
   export let allowPick = true;
