@@ -1,7 +1,7 @@
 # Plants Vs. Zombies: UNOFFICIAL WEB ENGINE
 
 ## ⚠️ DISCLAIMER ⚠️
-Legal: This project is in no way affiliated with PopCap, EA, or any other company involved in the production of the official PvZ Series.  Please support them by buying and playing PvZ (Not PvZ 2 because it has microtransactions and those suck) or PvZ GOTY edition.
+Legal: This project is in no way affiliated with PopCap, EA, or any other company involved in the production of the official PvZ Series.  Please support them by buying and playing PvZ (Not PvZ 2 because it has microtransactions and I get into why that's bad later) or PvZ GOTY edition.
 
 Players: If you're somehow on this repo, good on you.  You follow my GitHub account enough to check this shit out.  For now, y'all basically have nothing to do except generate ideas in my twitch (and soon Youtube) streams, as all I've done as of the most recent commit to the ReadMe is create the debug map that gets rendered under the main stylized map that gets rendered on top.  So basically the game is in an unplayable state currently.
 
