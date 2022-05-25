@@ -47,6 +47,10 @@ function create_fragment(ctx) {
 
 var FPS = 60;
 
+function sunHitTest(x, y, sunx, suny, width, height) {
+	return x >= sunx && x <= sunx + width && y > suny && y <= suny + height;
+}
+
 function instance($$self, $$props, $$invalidate) {
 	let { boardType } = $$props;
 	let { allowPick = false } = $$props;
@@ -350,11 +354,11 @@ function instance($$self, $$props, $$invalidate) {
 				width: 100,
 				height: 100,
 				lowestY: boardYOffset + laneHeight * 4 - 100,
-				lifetime: [0, 420]
+				lifetime: [0, 420],
+				collected: false
 			};
 
 			sunToBeDrawn.push(newSun);
-			console.log("yeah this is happening");
 			sunFall[0] = 0;
 		} else {
 			sunFall[0] += 1;
@@ -363,8 +367,26 @@ function instance($$self, $$props, $$invalidate) {
 		for (let i = 0; i < sunToBeDrawn.length; i++) {
 			const element = sunToBeDrawn[i];
 
-			if (element.posY < element.lowestY) {
+			if (element.posY < element.lowestY && !element.collected) {
 				element.posY += 1.5;
+			}
+
+			if (element.collected) {
+				if (element.posX > window.innerWidth * 0.003) {
+					element.posX -= 1 * (element.posX / (window.innerWidth * 0.003));
+				}
+
+				if (element.posY < window.innerHeight * 0.025) {
+					element.posY += 2 * (element.posY / (window.innerHeight * 0.025));
+				} else if (element.posY > window.innerHeight * 0.025) {
+					element.posY -= 2 * (element.posY / (window.innerHeight * 0.025));
+				}
+
+				let ybool = element.posY < window.innerHeight * 0.025;
+
+				if (element.posX < window.innerWidth * 0.003 && ybool) {
+					sunToBeDrawn.splice(i, 1);
+				}
 			}
 
 			if (element.lifetime[0] < element.lifetime[1] && !(element.posY < element.lowestY)) {
@@ -414,12 +436,20 @@ function instance($$self, $$props, $$invalidate) {
 
 		eventGame.onmousedown = function (e) {
 			if (selectedSeed == -1) {
-				
+				//Sun Collection Code
+				for (let i = 0; i < sunToBeDrawn.length; i++) {
+					const element = sunToBeDrawn[i];
+
+					if (sunHitTest(e.clientX, e.clientY, element.posX, element.posY, element.width, element.height) && !element.collected) {
+						element.collected = true;
+						$$invalidate(0, sunCount = parseInt(sunCount) + 25);
+					}
+				}
 			} else {
 				for (let i = 0; i < lanes.length; i++) {
 					for (let j = 0; j < 9; j++) {
 						if (lanes[i] == "dirt") {
-							break; //Do Nothing I Think
+							break;
 						}
 
 						if (tileHitTest(e.clientX, e.clientY, i, j)) {
@@ -437,12 +467,16 @@ function instance($$self, $$props, $$invalidate) {
 
 			selectedX = e.clientX;
 			selectedY = e.clientY;
-		}; //Add Sun Gather Code Here
+		};
 
 		eventGame.onmouseup = function (e) {
 			if (selectedSeed == -1) {
 				for (let i = 0; i < maxPlants; i++) {
 					if (PlantSunCost[i] > sunCount) {
+						break;
+					}
+
+					if (rechargeTime[i][0] < rechargeTime[i][1]) {
 						break;
 					}
 
