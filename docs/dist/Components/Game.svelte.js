@@ -30,7 +30,7 @@ function create_fragment(ctx) {
 	return {
 		c() {
 			div = element("div");
-			div.innerHTML = `<canvas id="game" width="1920" height="1080" class="svelte-1uvppqv"></canvas>`;
+			div.innerHTML = `<canvas id="game" width="1920" height="1080" class="svelte-1fyqfil"></canvas>`;
 			attr(div, "id", "gameWrapper");
 		},
 		m(target, anchor) {
@@ -112,7 +112,7 @@ function instance($$self, $$props, $$invalidate) {
 		packetBG.src = PacketPortraitPaths.BG;
 		loadedPorts.push(packetBG);
 		var sunIcon = new Image();
-		sunIcon.src = "../../images/resources/sun/sun.png";
+		sunIcon.src = "images/resources/sun/sun.png";
 		resourceImages.push(sunIcon);
 
 		for (let i = 0; i < maxPlants; i++) {
@@ -275,6 +275,7 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	var plantsToBeDrawn = [];
+	var sunToBeDrawn = [];
 
 	//Drawing Plants | Add support for animations later !!IMPORTANT!!
 	function drawPlants(ctx) {
@@ -379,7 +380,7 @@ function instance($$self, $$props, $$invalidate) {
 						}
 
 						if (tileHitTest(e.clientX, e.clientY, i, j)) {
-							let audio = new Audio("../../audio/plant1.ogg");
+							let audio = new Audio("audio/plant1.ogg");
 							audio.play();
 							let selectedPlantString = Object.keys(Plants)[selectedSeed];
 							let drawObject = { plant: selectedPlantString, tile: [j, i] };
