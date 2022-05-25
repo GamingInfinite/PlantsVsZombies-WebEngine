@@ -94,43 +94,21 @@
     var packetBG = new Image();
     var sunIcon = new Image();
 
-    if (window.location.href.indexOf("github") > -1) {
-      packetBG.src = "PlantsVsZombies-WebEngine/" + PacketPortraitPaths.BG;
-      sunIcon.src =
-        "PlantsVsZombies-WebEngine/" + "images/resources/sun/sun.png";
-    } else {
-      packetBG.src = PacketPortraitPaths.BG;
-      sunIcon.src = "images/resources/sun/sun.png";
-    }
-
+    packetBG.src = PacketPortraitPaths.BG;
+    sunIcon.src = "images/resources/sun/sun.png";
+    
     resourceImages.push(sunIcon);
     loadedPorts.push(packetBG);
 
     for (let i = 0; i < maxPlants; i++) {
       let plantPort = new Image();
-
-      if (window.location.href.indexOf("github") > -1) {
-        plantPort.src =
-          "PlantsVsZombies-WebEngine/" + seedPortaits[setPicks[i]];
-      } else {
-        plantPort.src = seedPortaits[setPicks[i]];
-      }
-
+      plantPort.src = seedPortaits[setPicks[i]];
       loadedPorts.push(plantPort);
 
       let plantIdle = [];
       for (let j = 0; j < PlantAnimFrameCounts[i]; j++) {
         let plantFrame = new Image();
-
-        if (window.location.href.indexOf("github") > -1) {
-          plantFrame.src =
-            "PlantsVsZombies-WebEngine/" +
-            PlantAnimPaths.SUNFLOWER +
-            j +
-            ".png";
-        } else {
-          plantFrame.src = PlantAnimPaths.SUNFLOWER + j + ".png";
-        }
+        plantFrame.src = PlantAnimPaths.SUNFLOWER + j + ".png";
         if (PlantIdleFrameOrder[i].includes(j)) {
           plantIdle.push(plantFrame);
         }
@@ -362,7 +340,9 @@
   }
 
   //Draw Falling and Produced Sun
-  function drawSunObjects(ctx, height, width) {}
+  function drawSunObjects(ctx, height, width) {
+    
+  }
 
   //Drawing Sun Hud
   function drawSunCount(ctx, height, width) {
