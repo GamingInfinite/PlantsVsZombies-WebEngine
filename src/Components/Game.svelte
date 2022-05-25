@@ -1,14 +1,36 @@
 <script>
-  import { Plants } from "../enums.ts";
+  import { onMount } from "svelte";
+
+  import {
+    Plants,
+    PlantAnimFrameCounts,
+    PacketPortraitPaths,
+    PlantAnimPaths,
+    PlantIdleFrameOrder,
+    PlantSpriteSizeRatio,
+    PlantSunCost,
+    PlantRechargeTime,
+  } from "../enums.ts";
 
   export let boardType;
-  export let allowPick = true;
-  export let maxPlants = 6;
-  export let setPicks = [Plants.PEASHOOTER];
+  export let allowPick = false;
+  export let maxPlants = 1;
+  export let setPicks = [Plants.SUNFLOWER];
+  export let sunCount = 50;
+
+  let rechargeTime = [];
 
   var boardInUse;
 
   var FPS = 60;
+
+  var boardXOffset;
+  var boardYOffset;
+
+  var laneHeight;
+  var laneWidth;
+  var tileWidth;
+  var packetsOffset;
 
   let boards = [
     {
@@ -52,8 +74,70 @@
     },
   ];
 
-  var lanes = [];
+  let selectedSeed = -1;
+  let selectedX;
+  let selectedY;
 
+  var lanes = [];
+  var loadedPorts = [];
+  var resourceImages = [];
+
+  var seedPortaits = [
+    PacketPortraitPaths.SUNFLOWER,
+    PacketPortraitPaths.PEASHOOTER,
+    PacketPortraitPaths.BONKCHOY,
+  ];
+
+  var plantAnims = [];
+
+  function loadImages() {
+    var packetBG = new Image();
+
+    packetBG.src = PacketPortraitPaths.BG;
+    loadedPorts.push(packetBG);
+
+    var sunIcon = new Image();
+
+    sunIcon.src = "../../images/resources/sun/sun.png";
+    resourceImages.push(sunIcon);
+
+    for (let i = 0; i < maxPlants; i++) {
+      let plantPort = new Image();
+      plantPort.src = seedPortaits[setPicks[i]];
+      loadedPorts.push(plantPort);
+
+      let plantIdle = [];
+      for (let j = 0; j < PlantAnimFrameCounts[i]; j++) {
+        let plantFrame = new Image();
+        plantFrame.src = PlantAnimPaths.SUNFLOWER + j + ".png";
+        if (PlantIdleFrameOrder[i].includes(j)) {
+          plantIdle.push(plantFrame);
+        }
+      }
+      plantAnims.push(plantIdle);
+    }
+  }
+
+  CanvasRenderingContext2D.prototype.roundRect = function (
+    x,
+    y,
+    width,
+    height,
+    radius
+  ) {
+    if (width < 2 * radius) radius = width / 2;
+    if (height < 2 * radius) radius = height / 2;
+    this.beginPath();
+    this.moveTo(x + radius, y);
+    this.arcTo(x + width, y, x + width, y + height, radius);
+    this.arcTo(x + width, y + height, x, y + height, radius);
+    this.arcTo(x, y + height, x, y, radius);
+    this.arcTo(x, y, x + width, y, radius);
+    this.closePath();
+    return this;
+  };
+
+  //Gets the json file from the boards array
   function getBoardJson(boardKey) {
     for (let i = 0; i < boards.length; i++) {
       const element = boards[i];
@@ -64,6 +148,7 @@
     }
   }
 
+  //Fills the lanes array
   function parseLanes() {
     for (let i = 0; i < boardInUse.lanes.length; i++) {
       const element = boardInUse.lanes[i];
@@ -73,6 +158,7 @@
     }
   }
 
+  //Used for drawDebugBoard()
   function getLaneJson(laneKey) {
     for (let i = 0; i < types.length; i++) {
       const element = types[i];
@@ -82,7 +168,25 @@
     }
   }
 
-  function drawBoard(ctx, height, width) {
+  function getPacketRecharge() {
+    for (let i = 0; i < maxPlants; i++) {
+      let rechargePair = [0, PlantRechargeTime[setPicks[i]]];
+
+      switch (setPicks[i]) {
+        case 0:
+          rechargePair[0] = PlantRechargeTime[setPicks[i]];
+          break;
+
+        default:
+          break;
+      }
+
+      rechargeTime.push(rechargePair);
+    }
+  }
+
+  //Drawing the Debug Lawn
+  function drawDebugBoard(ctx) {
     for (let i = 0; i < lanes.length; i++) {
       const element = lanes[i];
       if (getLaneJson(element).colors.length > 1) {
@@ -101,38 +205,311 @@
             ctx.fillStyle = getLaneJson(element).colors[altColor];
           }
           ctx.fillRect(
-            width * 0.1 + j * (width * 0.09445),
-            i * ((height - height * 0.3) / 5) + height * 0.2,
-            width * 0.09445,
-            (height - height * 0.3) / 5 + 1
+            boardXOffset + j * tileWidth,
+            i * laneHeight + boardYOffset,
+            tileWidth,
+            laneHeight + 1
           );
         }
       } else {
         ctx.fillStyle = getLaneJson(element).colors[boardInUse.colors[i]];
         ctx.fillRect(
-          width * 0.1,
-          i * ((height - height * 0.3) / 5) + height * 0.2,
-          width * 0.85,
-          (height - height * 0.3) / 5 + 1
+          boardXOffset,
+          i * laneHeight + boardYOffset,
+          laneWidth,
+          laneHeight + 1
         );
       }
     }
   }
 
+  //Drawing Seed Packets
+  function drawSeedPackets(ctx, height, width) {
+    for (let i = 0; i < maxPlants; i++) {
+      if (selectedSeed == i) {
+        ctx.globalAlpha = 0.5;
+
+        drawPacket(ctx, height, width, i);
+
+        ctx.globalAlpha = 1;
+
+        drawPacketAtCursor(ctx, width, i);
+      } else {
+        drawPacket(ctx, height, width, i);
+
+        let plantId = setPicks[i];
+        if (
+          PlantSunCost[plantId] > sunCount ||
+          rechargeTime[i][0] < rechargeTime[i][1]
+        ) {
+          ctx.fillStyle = "#000";
+          ctx.globalAlpha = 0.25;
+          ctx.roundRect(
+            packetsOffset + width * 0.12 * i,
+            height * 0.01,
+            width * 0.11,
+            laneHeight,
+            8
+          );
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+
+        if (rechargeTime[i][0] < rechargeTime[i][1]) {
+          let heightFraction = 1 - rechargeTime[i][0] / rechargeTime[i][1];
+
+          ctx.fillStyle = "#000";
+          ctx.globalAlpha = 0.25;
+          ctx.roundRect(
+            packetsOffset + width * 0.12 * i,
+            height * 0.01,
+            width * 0.11,
+            laneHeight * heightFraction,
+            8
+          );
+          ctx.fill();
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+  }
+
+  function drawPacket(ctx, height, width, i) {
+    //Draw BG
+    ctx.drawImage(
+      loadedPorts[0],
+      packetsOffset + width * 0.12 * i,
+      height * 0.01,
+      width * 0.11,
+      laneHeight
+    );
+
+    //Draw Portrait
+    ctx.drawImage(
+      loadedPorts[i + 1],
+      packetsOffset + width * 0.12 * i,
+      height * 0.01,
+      width * 0.11,
+      laneHeight
+    );
+  }
+
+  function drawPacketAtCursor(ctx, width, i) {
+    //Draw BG
+    ctx.drawImage(
+      loadedPorts[0],
+      selectedX - (width * 0.11) / 2,
+      selectedY - laneHeight / 2,
+      width * 0.11,
+      laneHeight
+    );
+
+    //Draw Portrait
+    ctx.drawImage(
+      loadedPorts[i + 1],
+      selectedX - (width * 0.11) / 2,
+      selectedY - laneHeight / 2,
+      width * 0.11,
+      laneHeight
+    );
+  }
+
+  var plantsToBeDrawn = [];
+
+  //Drawing Plants | Add support for animations later !!IMPORTANT!!
+  function drawPlants(ctx) {
+    let plantXOffset = tileWidth * 0.2;
+    let plantYOffset = laneHeight * 0.06;
+
+    for (let i = 0; i < plantsToBeDrawn.length; i++) {
+      const element = plantsToBeDrawn[i];
+
+      let firstFrame = plantAnims[element.plant][0];
+      let tileX = element.tile[0];
+      let tileY = element.tile[1];
+
+      //Add support for animations later !!IMPORTANT!!
+      ctx.drawImage(
+        firstFrame,
+        boardXOffset + tileX * tileWidth + plantXOffset,
+        tileY * laneHeight + boardYOffset + plantYOffset,
+        laneHeight * 0.9 * PlantSpriteSizeRatio[element.plant],
+        laneHeight * 0.9
+      );
+    }
+  }
+
+  //Draw Falling and Produced Sun
+  function drawSunObjects(ctx, height, width) {
+    
+  }
+
+  //Drawing Sun Hud
+  function drawSunCount(ctx, height, width) {
+    let sunIconXOffset = width * 0.003;
+    let sunIconYOffset = height * 0.025;
+    let sunCountXOffset = width * 0.055;
+    let sunCountYOffset = height * 0.095;
+    let sunBgXOffset = width * 0.05 - 20;
+    let sunBgYOffset = height * 0.095 - 40;
+
+    ctx.globalAlpha = 0.5;
+    ctx.fillStyle = "#000";
+    ctx.roundRect(sunBgXOffset, sunBgYOffset, 100, 50, 8);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+
+    ctx.font = "40px CafeteriaBlack";
+    ctx.fillStyle = "#FFF";
+    ctx.fillText(sunCount, sunCountXOffset, sunCountYOffset);
+    ctx.fillStyle = "#000";
+    ctx.strokeText(sunCount, sunCountXOffset, sunCountYOffset);
+
+    ctx.drawImage(resourceImages[0], sunIconXOffset, sunIconYOffset, 100, 100);
+  }
+
   getBoardJson(boardType);
   parseLanes();
-  getLaneJson("grass");
+  loadImages();
+  getPacketRecharge();
 
-  function update() {}
+  function update() {
+    boardXOffset = window.innerWidth * 0.15;
+    boardYOffset = window.innerHeight * 0.2;
+    packetsOffset = window.innerWidth * 0.1;
+    laneHeight = (window.innerHeight - window.innerHeight * 0.3) / 5;
+    laneWidth = window.innerWidth * 0.8;
+    tileWidth = laneWidth / 9;
+
+    for (let i = 0; i < maxPlants; i++) {
+      if (rechargeTime[i][0] < rechargeTime[i][1]) {
+        rechargeTime[i][0] += 1;
+      }
+    }
+  }
 
   function draw() {
+    //Frame Draw Preparation
     var canvas = document.getElementById("game");
     var ctx = canvas.getContext("2d");
     let height = window.innerHeight;
     let width = window.innerWidth;
     canvas.height = height;
     canvas.width = width;
-    drawBoard(ctx, height, width);
+
+    ctx.globalAlpha = 1;
+
+    //Debug Lawn
+    drawDebugBoard(ctx);
+
+    //Lawn Art/Image
+    //idk put an actual function here later when you get to it
+
+    //Draw Plants
+    drawPlants(ctx);
+
+    //Draw Projectiles (Sun, Peas, Darts, What have you)
+    drawSunObjects(ctx, height, width);
+
+    //Draw Zombies
+    //put function here
+
+    //Draw Foreground
+    //put function here
+
+    //Draw HUD (Seeds, Shovel, Sun Count, etc.)
+    drawSeedPackets(ctx, height, width);
+    drawSunCount(ctx, height, width);
+  }
+
+  onMount(() => {
+    let eventGame = document.getElementById("game");
+
+    eventGame.onmousedown = function (e) {
+      if (selectedSeed == -1) {
+        //Do Nothing I Think
+      } else {
+        for (let i = 0; i < lanes.length; i++) {
+          for (let j = 0; j < 9; j++) {
+            if (lanes[i] == "dirt") {
+              break;
+            }
+
+            if (tileHitTest(e.clientX, e.clientY, i, j)) {
+              let audio = new Audio("../../audio/plant1.ogg");
+              audio.play();
+
+              let selectedPlantString = Object.keys(Plants)[selectedSeed];
+
+              let drawObject = {
+                plant: selectedPlantString,
+                tile: [j, i],
+              };
+
+              sunCount -= PlantSunCost[selectedSeed];
+              rechargeTime[selectedSeed][0] = 0;
+
+              plantsToBeDrawn.push(drawObject);
+            }
+          }
+        }
+      }
+
+      selectedX = e.clientX;
+      selectedY = e.clientY;
+    };
+
+    eventGame.onmouseup = function (e) {
+      if (selectedSeed == -1) {
+        for (let i = 0; i < maxPlants; i++) {
+          if (PlantSunCost[i] > sunCount) {
+            break;
+          }
+          if (seedPacketHitTest(e.clientX, e.clientY, i)) {
+            selectedSeed = i;
+          }
+        }
+      } else {
+        selectedSeed = -1;
+      }
+    };
+
+    eventGame.onmousemove = function (e) {
+      if (selectedSeed == -1) {
+        return;
+      }
+
+      selectedX = e.clientX;
+      selectedY = e.clientY;
+    };
+  });
+
+  function seedPacketHitTest(x, y, i) {
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    let packetStartX = boardXOffset + width * 0.12 * i;
+    let packetStartY = height * 0.01;
+    let packetWidth = width * 0.11;
+    let packetHeight = laneHeight;
+    return (
+      x >= packetStartX &&
+      x <= packetStartX + packetWidth &&
+      y >= packetStartY &&
+      y <= packetStartY + packetHeight
+    );
+  }
+
+  function tileHitTest(x, y, i, j) {
+    let packetStartX = boardXOffset + j * tileWidth;
+    let packetStartY = i * laneHeight + boardYOffset;
+    let packetWidth = tileWidth;
+    let packetHeight = laneHeight + 1;
+    return (
+      x >= packetStartX &&
+      x <= packetStartX + packetWidth &&
+      y >= packetStartY &&
+      y <= packetStartY + packetHeight
+    );
   }
 
   setInterval(() => {
@@ -146,6 +523,11 @@
 </div>
 
 <style>
+  @font-face {
+    font-family: "CafeteriaBlack";
+    src: url("../../fonts/Cafeteria-Black.otf");
+  }
+
   #game {
     height: 100%;
     width: 100%;

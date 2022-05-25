@@ -3,7 +3,7 @@
 </script>
 
 <div id="app">
-  <svelte:component this={Game} boardType="frontLawn" />
+  <svelte:component this={Game} boardType="frontLawn" sunCount=50 />
 </div>
 
 <style>

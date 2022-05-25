@@ -1,125 +1,26 @@
 export enum Plants {
-    SUNFLOWER = {
-        "name": "Sunflower",
-        "recharge": 5000,
-        "cost": 50,
-        "damage": 25,
-        "fireRate": [32000, 36000],
-        "fireDirection": FireDirections.SPAWN,
-        "spawnType": SpawnTypes.SUN
-    },
-    PEASHOOTER = {
-        "name": "Peashooter",
-        "recharge": 5000,
-        "cost": 100,
-        "damage": 20,
-        "fireRate": [1350, 1500],
-        "fireDirection": FireDirections.STRAIGHT,
-        "fireType": FireTypes.PEA
-    }
+  SUNFLOWER = 0,
+  PEASHOOTER = 1,
+  BONKCHOY = 2,
 }
 
-export enum FireDirections {
-    STRAIGHT = "straight",
-    LOBBED = "lobbed",
-    SPAWN = "spawn"
+export enum PacketPortraitPaths {
+  BG = "../../images/seedpackets/seedpacket.png",
+  SUNFLOWER = "../../images/seedpackets/portraits/sunflower.png",
+  PEASHOOTER = "../../images/seedpackets/portraits/peashooter.png",
+  BONKCHOY = "../../images/seedpackets/portraits/bonkchoy.png",
 }
 
-export enum SpawnTypes {
-    SUN = "sun",
-    COINS = "coins"
-}
+export const PlantAnimFrameCounts = [1];
 
-export enum FireTypes {
-    PEA = "pea",
-}
+export const PlantIdleFrameOrder = [[0]];
 
-export enum Zombies {
-    BASIC = {
-        "name": "zombie",
-        "health": 190,
-        "protection": false,
-        "speed": ZombieSpeed.BASIC
-    },
-    CONE = {
-        "name": "cone",
-        "health": 190,
-        "protection": true,
-        "protectionType": ZombieArmor.CONE,
-        "speed": ZombieSpeed.BASIC
-    },
-    BUCKET = {
-        "name": "bucket",
-        "health": 190,
-        "protection": true,
-        "protectionType": ZombieArmor.BUCKET,
-        "speed": ZombieSpeed.BASIC
-    },
-}
+export const PlantSpriteSizeRatio = [250 / 284];
 
-export enum ZombieArmor {
-    CONE = {
-        "bonusHealth": 370
-    },
-    BUCKET = {
-        "bonusHealth": 1100
-    }
-}
+export const PlantSunCost = [50]
 
-export enum ZombieSpeed {
-    BASIC = 4700
-}
+export const PlantRechargeTime = [300]
 
-export enum Boards {
-    TUTORIAL1 = {name: "tutorial1",
-    lanes: [
-      {
-        type: "dirt",
-        number: 2,
-      },
-      {
-        type: "grass",
-        number: 1,
-      },
-      {
-        type: "dirt",
-        number: 2,
-      },
-    ],
-    colors: [0, 0, 0, 0, 0],},
-    TUTORIAL2 = {name: "tutorial2",
-    lanes: [
-      {
-        type: "dirt",
-        number: 1,
-      },
-      {
-        type: "grass",
-        number: 2,
-      },
-      {
-        type: "dirt",
-        number: 1,
-      },
-    ],
-    colors: [0, 1, 0, 1, 0],},
-    FRONTLAWN = {name: "frontLawn",
-    lanes: [
-      {
-        type: "grass",
-        number: 5,
-      },
-    ],
-    colors: [0, 1, 0, 1, 0],}
-}
-
-export enum Lanes {
-    GRASS = {
-        name: "grass",
-        colors: ["#154f1a", "#33b83e"],
-      },
-      DIRT = {
-        name: "dirt",
-        colors: ["#836539"],
-      },
+export enum PlantAnimPaths {
+  SUNFLOWER = "../../images/plants/sunflower/",
 }

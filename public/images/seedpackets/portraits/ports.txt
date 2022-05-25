@@ -1,0 +1,12 @@
+Read This if You Forgot How To Make Portraits.
+
+1. Open the Seedpacket Template
+2. Make A Copy
+3. Make a Layer Between The 2 Existing
+4. Copy Whatever Art You Want In There
+5. Make a Layer on Top of the Overlay for Cost So It Doesn't Look Weird
+6. Make The Font Georgia and Pt 28 (This Looks the Best and Most Consistent)
+7. Make the Color the Same as the Border
+7. Type a 1 in front of the cost to line it up with the top and bottom of the sun
+8. Remove the 1 and center it as best you can.
+9. Delete The Background and Merge All Layers, save to proper file name.
