@@ -5,10 +5,10 @@ export enum Plants {
 }
 
 export enum PacketPortraitPaths {
-  BG = "../../images/seedpackets/seedpacket.png",
-  SUNFLOWER = "../../images/seedpackets/portraits/sunflower.png",
-  PEASHOOTER = "../../images/seedpackets/portraits/peashooter.png",
-  BONKCHOY = "../../images/seedpackets/portraits/bonkchoy.png",
+  BG = "images/seedpackets/seedpacket.png",
+  SUNFLOWER = "images/seedpackets/portraits/sunflower.png",
+  PEASHOOTER = "images/seedpackets/portraits/peashooter.png",
+  BONKCHOY = "images/seedpackets/portraits/bonkchoy.png",
 }
 
 export const PlantAnimFrameCounts = [1];
@@ -22,5 +22,5 @@ export const PlantSunCost = [50]
 export const PlantRechargeTime = [300]
 
 export enum PlantAnimPaths {
-  SUNFLOWER = "../../images/plants/sunflower/",
+  SUNFLOWER = "images/plants/sunflower/",
 }

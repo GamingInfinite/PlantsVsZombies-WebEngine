@@ -98,7 +98,7 @@
 
     var sunIcon = new Image();
 
-    sunIcon.src = "../../images/resources/sun/sun.png";
+    sunIcon.src = "images/resources/sun/sun.png";
     resourceImages.push(sunIcon);
 
     for (let i = 0; i < maxPlants; i++) {
@@ -315,6 +315,7 @@
   }
 
   var plantsToBeDrawn = [];
+  var sunToBeDrawn = [];
 
   //Drawing Plants | Add support for animations later !!IMPORTANT!!
   function drawPlants(ctx) {
@@ -436,7 +437,7 @@
             }
 
             if (tileHitTest(e.clientX, e.clientY, i, j)) {
-              let audio = new Audio("../../audio/plant1.ogg");
+              let audio = new Audio("audio/plant1.ogg");
               audio.play();
 
               let selectedPlantString = Object.keys(Plants)[selectedSeed];
@@ -525,7 +526,7 @@
 <style>
   @font-face {
     font-family: "CafeteriaBlack";
-    src: url("../../fonts/Cafeteria-Black.otf");
+    src: url("fonts/Cafeteria-Black.otf");
   }
 
   #game {
