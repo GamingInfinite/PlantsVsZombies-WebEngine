@@ -25,7 +25,9 @@ function create_fragment(ctx) {
 	var switch_value = Game;
 
 	function switch_props(ctx) {
-		return { props: { boardType: "frontLawn" } };
+		return {
+			props: { boardType: "frontLawn", sunCount: "50" }
+		};
 	}
 
 	if (switch_value) {
