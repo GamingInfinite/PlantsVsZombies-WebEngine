@@ -19,6 +19,7 @@
   export let sunCount = 50;
 
   let rechargeTime = [];
+  let sunFall = [0, 600];
 
   var boardInUse;
 
@@ -96,7 +97,7 @@
 
     packetBG.src = PacketPortraitPaths.BG;
     sunIcon.src = "images/resources/sun/sun.png";
-    
+
     resourceImages.push(sunIcon);
     loadedPorts.push(packetBG);
 
@@ -340,8 +341,20 @@
   }
 
   //Draw Falling and Produced Sun
-  function drawSunObjects(ctx, height, width) {
-    
+  function drawSunObjects(ctx) {
+    for (let i = 0; i < sunToBeDrawn.length; i++) {
+      const element = sunToBeDrawn[i];
+
+      let img = resourceImages[0];
+
+      let sunPositionX = element.posX;
+      let sunPositionY = element.posY;
+      let sunWidth = element.width;
+      let sunHeight = element.height;
+
+      ctx.globalAlpha = 1 - element.lifetime[0] / element.lifetime[1];
+      ctx.drawImage(img, sunPositionX, sunPositionY, sunWidth, sunHeight);
+    }
   }
 
   //Drawing Sun Hud
@@ -386,6 +399,40 @@
         rechargeTime[i][0] += 1;
       }
     }
+
+    if (sunFall[0] == sunFall[1]) {
+      let newSun = {
+        posX: Math.floor(Math.random() * laneWidth) + boardXOffset - 100,
+        posY: -100,
+        width: 100,
+        height: 100,
+        lowestY: boardYOffset + laneHeight * 4 - 100,
+        lifetime: [0, 420],
+      };
+      sunToBeDrawn.push(newSun);
+      console.log("yeah this is happening");
+      sunFall[0] = 0;
+    } else {
+      sunFall[0] += 1;
+    }
+
+    for (let i = 0; i < sunToBeDrawn.length; i++) {
+      const element = sunToBeDrawn[i];
+
+      if (element.posY < element.lowestY) {
+        element.posY += 1.5;
+      }
+
+      if (
+        element.lifetime[0] < element.lifetime[1] &&
+        !(element.posY < element.lowestY)
+      ) {
+        element.lifetime[0] += 1;
+      } else if (element.lifetime[1] == -1) {
+      } else if (element.lifetime[0] == element.lifetime[1]) {
+        sunToBeDrawn.splice(i, 1);
+      }
+    }
   }
 
   function draw() {
@@ -409,7 +456,7 @@
     drawPlants(ctx);
 
     //Draw Projectiles (Sun, Peas, Darts, What have you)
-    drawSunObjects(ctx, height, width);
+    drawSunObjects(ctx);
 
     //Draw Zombies
     //put function here
@@ -457,6 +504,8 @@
 
       selectedX = e.clientX;
       selectedY = e.clientY;
+
+      //Add Sun Gather Code Here
     };
 
     eventGame.onmouseup = function (e) {
