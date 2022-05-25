@@ -6,10 +6,10 @@ export var Plants;
 })(Plants || (Plants = {}));
 export var PacketPortraitPaths;
 (function(PacketPortraitPaths2) {
-  PacketPortraitPaths2["BG"] = "../../images/seedpackets/seedpacket.png";
-  PacketPortraitPaths2["SUNFLOWER"] = "../../images/seedpackets/portraits/sunflower.png";
-  PacketPortraitPaths2["PEASHOOTER"] = "../../images/seedpackets/portraits/peashooter.png";
-  PacketPortraitPaths2["BONKCHOY"] = "../../images/seedpackets/portraits/bonkchoy.png";
+  PacketPortraitPaths2["BG"] = "images/seedpackets/seedpacket.png";
+  PacketPortraitPaths2["SUNFLOWER"] = "images/seedpackets/portraits/sunflower.png";
+  PacketPortraitPaths2["PEASHOOTER"] = "images/seedpackets/portraits/peashooter.png";
+  PacketPortraitPaths2["BONKCHOY"] = "images/seedpackets/portraits/bonkchoy.png";
 })(PacketPortraitPaths || (PacketPortraitPaths = {}));
 export const PlantAnimFrameCounts = [1];
 export const PlantIdleFrameOrder = [[0]];
@@ -18,5 +18,5 @@ export const PlantSunCost = [50];
 export const PlantRechargeTime = [300];
 export var PlantAnimPaths;
 (function(PlantAnimPaths2) {
-  PlantAnimPaths2["SUNFLOWER"] = "../../images/plants/sunflower/";
+  PlantAnimPaths2["SUNFLOWER"] = "images/plants/sunflower/";
 })(PlantAnimPaths || (PlantAnimPaths = {}));
