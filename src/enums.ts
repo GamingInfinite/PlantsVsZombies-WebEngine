@@ -21,6 +21,10 @@ export const PlantSunCost = [50]
 
 export const PlantRechargeTime = [300]
 
+export enum PlantHealth {
+  SUNFLOWER = 300
+}
+
 export enum PlantAnimPaths {
   SUNFLOWER = "images/plants/sunflower/",
 }
