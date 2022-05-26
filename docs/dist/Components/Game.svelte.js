@@ -21,7 +21,8 @@ import {
 	PlantIdleFrameOrder,
 	PlantSpriteSizeRatio,
 	PlantSunCost,
-	PlantRechargeTime
+	PlantRechargeTime,
+	PlantHealth
 } from "../enums.js";
 
 function create_fragment(ctx) {
@@ -355,7 +356,8 @@ function instance($$self, $$props, $$invalidate) {
 				height: 100,
 				lowestY: boardYOffset + laneHeight * 4 - 100,
 				lifetime: [0, 420],
-				collected: false
+				collected: false,
+				value: 25
 			};
 
 			sunToBeDrawn.push(newSun);
@@ -442,7 +444,7 @@ function instance($$self, $$props, $$invalidate) {
 
 					if (sunHitTest(e.clientX, e.clientY, element.posX, element.posY, element.width, element.height) && !element.collected) {
 						element.collected = true;
-						$$invalidate(0, sunCount = parseInt(sunCount) + 25);
+						$$invalidate(0, sunCount = parseInt(sunCount) + element.value);
 					}
 				}
 			} else {
@@ -460,6 +462,7 @@ function instance($$self, $$props, $$invalidate) {
 							$$invalidate(0, sunCount -= PlantSunCost[selectedSeed]);
 							rechargeTime[selectedSeed][0] = 0;
 							plantsToBeDrawn.push(drawObject);
+							plantFunctions[selectedSeed](j, i);
 						}
 					}
 				}
@@ -524,6 +527,44 @@ function instance($$self, $$props, $$invalidate) {
 		},
 		1000 / FPS
 	);
+
+	//PLANT LOOPS.  I literally am going to go insane.  I need to debug these each INDIVIDUALLY.  Like some are similar but this is going to be hell.
+	const plantFunctions = [sunflower];
+
+	var plants = [];
+	var plantHealthControl = [];
+	var plantActionTimers = [];
+
+	function sunflower(tileX, tileY) {
+		plants.push(setInterval(sunflowerCallback, 1000 / FPS, tileX, tileY, plants.length));
+		plantHealthControl.push(PlantHealth.SUNFLOWER);
+		plantActionTimers.push([0, Math.floor(Math.random() * 240) + 1920]);
+	}
+
+	function sunflowerCallback(tileX, tileY, id) {
+		let tileStartX = boardXOffset + tileX * tileWidth;
+		let tileStartY = tileY * laneHeight + boardYOffset;
+		let plantXOffset = tileWidth * 0.2;
+		let plantYOffset = laneHeight * 0.06;
+
+		if (plantActionTimers[id][0] >= plantActionTimers[id][1]) {
+			sunToBeDrawn.push({
+				posX: tileStartX + plantXOffset + 50,
+				posY: tileStartY + plantYOffset,
+				width: 100,
+				height: 100,
+				lowestY: tileStartY + laneHeight - 100,
+				lifetime: [0, 480],
+				collected: false,
+				value: 25
+			});
+
+			plantActionTimers[id][0] = 0;
+			plantActionTimers[id][1] = Math.floor(Math.random() * 240) + 1920;
+		} else if (plantActionTimers[id][0] < plantActionTimers[id][1]) {
+			plantActionTimers[id][0] += 1;
+		}
+	}
 
 	$$self.$$set = $$props => {
 		if ('boardType' in $$props) $$invalidate(1, boardType = $$props.boardType);

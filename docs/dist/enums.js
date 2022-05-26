@@ -16,6 +16,10 @@ export const PlantIdleFrameOrder = [[0]];
 export const PlantSpriteSizeRatio = [250 / 284];
 export const PlantSunCost = [50];
 export const PlantRechargeTime = [300];
+export var PlantHealth;
+(function(PlantHealth2) {
+  PlantHealth2[PlantHealth2["SUNFLOWER"] = 300] = "SUNFLOWER";
+})(PlantHealth || (PlantHealth = {}));
 export var PlantAnimPaths;
 (function(PlantAnimPaths2) {
   PlantAnimPaths2["SUNFLOWER"] = "images/plants/sunflower/";
