@@ -70,11 +70,12 @@ function instance($$self, $$props, $$invalidate) {
 	let { boardType } = $$props;
 	let { allowPick = false } = $$props;
 	let { maxPlants = 10 } = $$props;
-	let { setPicks = [Plants.PEASHOOTER, Plants.SUNFLOWER] } = $$props;
+	let { setPicks = [Plants.SUNFLOWER, Plants.PEASHOOTER] } = $$props;
 	let { sunCount = 50 } = $$props;
 	let rechargeTime = [];
 	let sunFall = [0, 600];
 	var boardInUse;
+	var isFullscreen = false;
 	var boardXOffset;
 	var boardYOffset;
 	var laneHeight;
@@ -85,6 +86,15 @@ function instance($$self, $$props, $$invalidate) {
 	var packetsYOffset;
 	var packetHeight;
 	var packetWidth;
+	let sunWH;
+	let sunIconXOffset;
+	let sunIconYOffset;
+	let sunBgXOffset;
+	let sunBgYOffset;
+	let sunBgWidth;
+	let sunBgHeight;
+	let sunCountXOffset;
+	let sunCountYOffset;
 
 	let boards = [
 		{
@@ -335,16 +345,10 @@ function instance($$self, $$props, $$invalidate) {
 	}
 
 	//Drawing Sun Hud
-	function drawSunCount(ctx, height, width) {
-		let sunIconXOffset = width * 0.003;
-		let sunIconYOffset = height * 0.025;
-		let sunCountXOffset = width * 0.055;
-		let sunCountYOffset = height * 0.095;
-		let sunBgXOffset = width * 0.05 - 20;
-		let sunBgYOffset = height * 0.095 - 40;
+	function drawSunCount(ctx) {
 		ctx.globalAlpha = 0.5;
 		ctx.fillStyle = "#000";
-		ctx.roundRect(sunBgXOffset, sunBgYOffset, 100, 50, 8);
+		ctx.roundRect(sunBgXOffset, sunBgYOffset, sunBgWidth, sunBgHeight, 8);
 		ctx.fill();
 		ctx.globalAlpha = 1;
 		ctx.font = "40px CafeteriaBlack";
@@ -352,13 +356,13 @@ function instance($$self, $$props, $$invalidate) {
 		ctx.fillText(sunCount, sunCountXOffset, sunCountYOffset);
 		ctx.fillStyle = "#000";
 		ctx.strokeText(sunCount, sunCountXOffset, sunCountYOffset);
-		ctx.drawImage(resourceImages[0], sunIconXOffset, sunIconYOffset, 100, 100);
+		ctx.drawImage(resourceImages[0], sunIconXOffset, sunIconYOffset, sunWH, sunWH);
 	}
 
 	//Draw Shovel
-	function drawShovel(ctx, width, height) {
+	function drawShovel(ctx, width) {
 		var shovelXOffset = packetsXOffset + (packetWidth + packetSeperation) * maxPlants;
-		var shovelYOffset = height * 0.05;
+		var shovelYOffset = packetsYOffset + packetHeight / 8;
 
 		if (!shovelSelect) {
 			ctx.drawImage(extraIcons[0], shovelXOffset, shovelYOffset, width * 0.04, width * 0.04);
@@ -376,11 +380,20 @@ function instance($$self, $$props, $$invalidate) {
 	getPacketRecharge();
 
 	function update() {
+		sunWH = window.innerHeight * 0.12;
+		sunIconXOffset = window.innerWidth * 0.005;
+		sunIconYOffset = window.innerHeight * 0.03;
+		sunBgXOffset = sunIconXOffset + sunWH / 1.5;
+		sunBgYOffset = sunIconYOffset + sunWH / 4;
+		sunBgWidth = sunWH;
+		sunBgHeight = sunWH / 2;
+		sunCountXOffset = sunIconXOffset + sunBgXOffset * 1.3;
+		sunCountYOffset = sunIconYOffset + sunBgYOffset * 1.25;
 		boardXOffset = window.innerWidth * 0.15;
 		boardYOffset = window.innerHeight * 0.2;
-		packetsXOffset = window.innerWidth * 0.1;
+		packetsXOffset = sunBgXOffset + sunBgWidth + window.innerWidth * 0.01;
 		packetSeperation = window.innerWidth * 0.005;
-		packetsYOffset = window.innerHeight * 0.04;
+		packetsYOffset = sunBgYOffset - sunBgHeight / 6;
 		laneHeight = (window.innerHeight - window.innerHeight * 0.3) / 5;
 		laneWidth = window.innerWidth * 0.8;
 		let packetRatio = 348 / 216;
@@ -396,11 +409,11 @@ function instance($$self, $$props, $$invalidate) {
 
 		if (sunFall[0] == sunFall[1]) {
 			let newSun = {
-				posX: Math.floor(Math.random() * laneWidth) + boardXOffset - 100,
-				posY: -100,
-				width: 100,
-				height: 100,
-				lowestY: boardYOffset + laneHeight * 4 - 100,
+				posX: Math.floor(Math.random() * laneWidth) + boardXOffset - sunWH,
+				posY: -sunWH,
+				width: sunWH,
+				height: sunWH,
+				lowestY: boardYOffset + laneHeight * 4 - sunWH,
 				lifetime: [0, 420],
 				collected: false,
 				value: 25
@@ -473,8 +486,8 @@ function instance($$self, $$props, $$invalidate) {
 		//Draw HUD (Seeds, Shovel, Sun Count, etc.)
 		drawSeedPackets(ctx);
 
-		drawSunCount(ctx, height, width);
-		drawShovel(ctx, width, height);
+		drawSunCount(ctx);
+		drawShovel(ctx, width);
 
 		//Draw Projectiles (Sun, Peas, Darts, What have you)
 		drawSunObjects(ctx);
@@ -539,6 +552,7 @@ function instance($$self, $$props, $$invalidate) {
 												audio.play();
 												plantHealthControl[id] = 0;
 												plantsToBeDrawn.splice(id, 1);
+												shovelSelect = false;
 												break action_completed;
 											}
 										}
@@ -591,9 +605,21 @@ function instance($$self, $$props, $$invalidate) {
 		};
 
 		document.onkeydown = function (e) {
-			if (e.code.toLowerCase() == "escape") {
+			if (e.code.toLowerCase() == "keyr") {
+				if (selectedSeed == -1 && shovelSelect == false) {
+					document.exitFullscreen();
+				}
+
 				shovelSelect = false;
 				selectedSeed = -1;
+			}
+
+			if (e.code.toLowerCase() == "keyf") {
+				//Make this remapable later
+				let elemFull = document.getElementById("gameWrapper");
+
+				elemFull.requestFullscreen();
+				isFullscreen = true;
 			}
 
 			let digitKeys = [
@@ -691,9 +717,9 @@ function instance($$self, $$props, $$invalidate) {
 			sunToBeDrawn.push({
 				posX: tileStartX + plantXOffset,
 				posY: tileStartY + plantYOffset,
-				width: 100,
-				height: 100,
-				lowestY: tileStartY + laneHeight - 100,
+				width: sunWH,
+				height: sunWH,
+				lowestY: tileStartY + laneHeight - sunWH,
 				lifetime: [0, 480],
 				collected: false,
 				value: 25
@@ -747,7 +773,7 @@ class Game extends SvelteComponent {
 				sunCount: 1
 			},
 			null,
-			[-1, -1]
+			[-1, -1, -1]
 		);
 	}
 }
