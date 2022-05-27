@@ -16,7 +16,7 @@
   export let boardType;
   export let allowPick = false;
   export let maxPlants = 10;
-  export let setPicks = [Plants.SUNFLOWER, Plants.PEASHOOTER];
+  export let setPicks = [Plants.PEASHOOTER, Plants.SUNFLOWER];
   export let sunCount = 50;
 
   let rechargeTime = [];
@@ -249,7 +249,7 @@
   //Drawing Seed Packets
   function drawSeedPackets(ctx) {
     for (let i = 0; i < maxPlants; i++) {
-      if (selectedSeed == i) {
+      if (selectedSeed == setPicks[i]) {
         ctx.globalAlpha = 0.5;
 
         drawPacket(ctx, i);
@@ -613,7 +613,7 @@
                     };
 
                     sunCount -= PlantSunCost[selectedSeed];
-                    rechargeTime[selectedSeed][0] = 0;
+                    rechargeTime[setPicks[selectedSeed]][0] = 0;
 
                     plantsToBeDrawn.push(drawObject);
                     plantFunctions[selectedSeed](j, i);
@@ -649,7 +649,7 @@
       if (selectedSeed == -1 && !shovelSelect) {
         for (let i = 0; i < maxPlants; i++) {
           noresponse: {
-            if (PlantSunCost[i] > sunCount) {
+            if (PlantSunCost[setPicks[i]] > sunCount) {
               break noresponse;
             }
             if (rechargeTime[i][0] < rechargeTime[i][1]) {
@@ -657,7 +657,7 @@
             }
 
             if (seedPacketHitTest(e.clientX, e.clientY, i)) {
-              selectedSeed = i;
+              selectedSeed = setPicks[i];
               let seedLift = new Audio("audio/seedlift.ogg");
               seedLift.play();
             }
@@ -685,10 +685,6 @@
     };
 
     eventGame.onmousemove = function (e) {
-      if (selectedSeed == -1 && !shovelSelect) {
-        return;
-      }
-
       selectedX = e.clientX;
       selectedY = e.clientY;
     };
@@ -697,6 +693,36 @@
       if (e.code.toLowerCase() == "escape") {
         shovelSelect = false;
         selectedSeed = -1;
+      }
+
+      let digitKeys = [
+        "digit1",
+        "digit2",
+        "digit3",
+        "digit4",
+        "digit5",
+        "digit6",
+        "digit7",
+        "digit8",
+        "digit9",
+        "digit0",
+      ];
+
+      for (let i = 0; i < digitKeys.length; i++) {
+        noresponse: {
+          if (e.code.toLowerCase() == digitKeys[i]) {
+            console.log("lol");
+            if (PlantSunCost[setPicks[i]] > sunCount) {
+              break noresponse;
+            }
+            if (rechargeTime[i][0] < rechargeTime[i][1]) {
+              break noresponse;
+            }
+            selectedSeed = setPicks[i];
+            let seedLift = new Audio("audio/seedlift.ogg");
+            seedLift.play();
+          }
+        }
       }
     };
   });
