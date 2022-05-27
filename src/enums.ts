@@ -11,20 +11,22 @@ export enum PacketPortraitPaths {
   BONKCHOY = "images/seedpackets/portraits/bonkchoy.png",
 }
 
-export const PlantAnimFrameCounts = [1];
+export const PlantAnimFrameCounts = [1, 1];
 
-export const PlantIdleFrameOrder = [[0]];
+export const PlantIdleFrameOrder = [[0], [0]];
 
-export const PlantSpriteSizeRatio = [250 / 284];
+export const PlantSpriteSizeRatio = [250 / 284, 250 / 247];
 
-export const PlantSunCost = [50]
+export const PlantSunCost = [50, 100];
 
-export const PlantRechargeTime = [300]
+export const PlantRechargeTime = [300, 300];
 
 export enum PlantHealth {
-  SUNFLOWER = 300
+  SUNFLOWER = 300,
+  PEASHOOTER = 300,
 }
 
-export enum PlantAnimPaths {
-  SUNFLOWER = "images/plants/sunflower/",
-}
+export const PlantAnimPaths = [
+  "images/plants/sunflower/",
+  "images/plants/peashooter/",
+];

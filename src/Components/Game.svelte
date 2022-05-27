@@ -15,8 +15,8 @@
 
   export let boardType;
   export let allowPick = false;
-  export let maxPlants = 1;
-  export let setPicks = [Plants.SUNFLOWER];
+  export let maxPlants = 10;
+  export let setPicks = [Plants.SUNFLOWER, Plants.PEASHOOTER];
   export let sunCount = 50;
 
   let rechargeTime = [];
@@ -32,7 +32,11 @@
   var laneHeight;
   var laneWidth;
   var tileWidth;
-  var packetsOffset;
+  var packetsXOffset;
+  var packetSeperation;
+  var packetsYOffset;
+  var packetHeight;
+  var packetWidth;
 
   let boards = [
     {
@@ -77,12 +81,14 @@
   ];
 
   let selectedSeed = -1;
+  let shovelSelect = false;
   let selectedX;
   let selectedY;
 
   var lanes = [];
   var loadedPorts = [];
   var resourceImages = [];
+  var extraIcons = [];
 
   var seedPortaits = [
     PacketPortraitPaths.SUNFLOWER,
@@ -92,17 +98,33 @@
 
   var plantAnims = [];
 
+  function drawRotated(ctx, degrees, img, x, y, width, height) {
+    let radians = (degrees * Math.PI) / 180;
+    let xtranslate = x + width / 2;
+    let ytranslate = y + height / 2;
+    ctx.translate(xtranslate, ytranslate);
+    ctx.rotate(radians);
+    ctx.translate(-xtranslate, -ytranslate);
+    ctx.drawImage(img, x, y, width, height);
+  }
+
   function loadImages() {
     var packetBG = new Image();
     var sunIcon = new Image();
+    var shovelIcon = new Image();
 
     packetBG.src = PacketPortraitPaths.BG;
     sunIcon.src = "images/resources/sun/sun.png";
+    shovelIcon.src = "images/shovel.png";
 
     resourceImages.push(sunIcon);
     loadedPorts.push(packetBG);
+    extraIcons.push(shovelIcon);
 
     for (let i = 0; i < maxPlants; i++) {
+      if (typeof setPicks[i] == "undefined") {
+        setPicks[i] = 0;
+      }
       let plantPort = new Image();
       plantPort.src = seedPortaits[setPicks[i]];
       loadedPorts.push(plantPort);
@@ -110,7 +132,7 @@
       let plantIdle = [];
       for (let j = 0; j < PlantAnimFrameCounts[i]; j++) {
         let plantFrame = new Image();
-        plantFrame.src = PlantAnimPaths.SUNFLOWER + j + ".png";
+        plantFrame.src = PlantAnimPaths[i] + j + ".png";
         if (PlantIdleFrameOrder[i].includes(j)) {
           plantIdle.push(plantFrame);
         }
@@ -225,18 +247,18 @@
   }
 
   //Drawing Seed Packets
-  function drawSeedPackets(ctx, height, width) {
+  function drawSeedPackets(ctx) {
     for (let i = 0; i < maxPlants; i++) {
       if (selectedSeed == i) {
         ctx.globalAlpha = 0.5;
 
-        drawPacket(ctx, height, width, i);
+        drawPacket(ctx, i);
 
         ctx.globalAlpha = 1;
 
-        drawPacketAtCursor(ctx, width, i);
+        drawPacketAtCursor(ctx, i);
       } else {
-        drawPacket(ctx, height, width, i);
+        drawPacket(ctx, i);
 
         let plantId = setPicks[i];
         if (
@@ -246,10 +268,10 @@
           ctx.fillStyle = "#000";
           ctx.globalAlpha = 0.25;
           ctx.roundRect(
-            packetsOffset + width * 0.12 * i,
-            height * 0.01,
-            width * 0.11,
-            laneHeight,
+            packetsXOffset + (packetWidth+packetSeperation) * i,
+            packetsYOffset,
+            packetWidth,
+            packetHeight,
             8
           );
           ctx.fill();
@@ -262,10 +284,10 @@
           ctx.fillStyle = "#000";
           ctx.globalAlpha = 0.25;
           ctx.roundRect(
-            packetsOffset + width * 0.12 * i,
-            height * 0.01,
-            width * 0.11,
-            laneHeight * heightFraction,
+            packetsXOffset + (packetWidth+packetSeperation) * i,
+            packetsYOffset,
+            packetWidth,
+            packetHeight * heightFraction,
             8
           );
           ctx.fill();
@@ -275,43 +297,43 @@
     }
   }
 
-  function drawPacket(ctx, height, width, i) {
+  function drawPacket(ctx, i) {
     //Draw BG
     ctx.drawImage(
       loadedPorts[0],
-      packetsOffset + width * 0.12 * i,
-      height * 0.01,
-      width * 0.11,
-      laneHeight
+      packetsXOffset + (packetWidth+packetSeperation) * i,
+      packetsYOffset,
+      packetWidth,
+      packetHeight
     );
 
     //Draw Portrait
     ctx.drawImage(
       loadedPorts[i + 1],
-      packetsOffset + width * 0.12 * i,
-      height * 0.01,
-      width * 0.11,
-      laneHeight
+      packetsXOffset + (packetWidth+packetSeperation) * i,
+      packetsYOffset,
+      packetWidth,
+      packetHeight
     );
   }
 
-  function drawPacketAtCursor(ctx, width, i) {
+  function drawPacketAtCursor(ctx, i) {
     //Draw BG
     ctx.drawImage(
       loadedPorts[0],
-      selectedX - (width * 0.11) / 2,
-      selectedY - laneHeight / 2,
-      width * 0.11,
-      laneHeight
+      selectedX - packetWidth / 2,
+      selectedY - packetHeight / 2,
+      packetWidth,
+      packetHeight
     );
 
     //Draw Portrait
     ctx.drawImage(
       loadedPorts[i + 1],
-      selectedX - (width * 0.11) / 2,
-      selectedY - laneHeight / 2,
-      width * 0.11,
-      laneHeight
+      selectedX - packetWidth / 2,
+      selectedY - packetHeight / 2,
+      packetWidth,
+      packetHeight
     );
   }
 
@@ -320,15 +342,17 @@
 
   //Drawing Plants | Add support for animations later !!IMPORTANT!!
   function drawPlants(ctx) {
-    let plantXOffset = tileWidth * 0.2;
-    let plantYOffset = laneHeight * 0.06;
-
     for (let i = 0; i < plantsToBeDrawn.length; i++) {
       const element = plantsToBeDrawn[i];
 
       let firstFrame = plantAnims[element.plant][0];
       let tileX = element.tile[0];
       let tileY = element.tile[1];
+
+      let plantXOffset =
+        tileWidth * 0.5 -
+        (laneHeight * 0.9 * PlantSpriteSizeRatio[element.plant]) / 2;
+      let plantYOffset = laneHeight * 0.06;
 
       //Add support for animations later !!IMPORTANT!!
       ctx.drawImage(
@@ -382,6 +406,39 @@
     ctx.drawImage(resourceImages[0], sunIconXOffset, sunIconYOffset, 100, 100);
   }
 
+  //Draw Shovel
+  function drawShovel(ctx, width, height) {
+    var shovelXOffset = packetsXOffset + (packetWidth+packetSeperation) * maxPlants;
+    var shovelYOffset = height * 0.05;
+
+    if (!shovelSelect) {
+      ctx.drawImage(
+        extraIcons[0],
+        shovelXOffset,
+        shovelYOffset,
+        width * 0.04,
+        width * 0.04
+      );
+    } else {
+      ctx.globalAlpha = 0.5;
+      ctx.drawImage(
+        extraIcons[0],
+        shovelXOffset,
+        shovelYOffset,
+        width * 0.04,
+        width * 0.04
+      );
+      ctx.globalAlpha = 1;
+      ctx.drawImage(
+        extraIcons[0],
+        selectedX - (width * 0.04) / 2,
+        selectedY - (width * 0.04) / 2,
+        width * 0.04,
+        width * 0.04
+      );
+    }
+  }
+
   getBoardJson(boardType);
   parseLanes();
   loadImages();
@@ -390,9 +447,16 @@
   function update() {
     boardXOffset = window.innerWidth * 0.15;
     boardYOffset = window.innerHeight * 0.2;
-    packetsOffset = window.innerWidth * 0.1;
+    packetsXOffset = window.innerWidth * 0.1;
+    packetSeperation = window.innerWidth * 0.005;
+    packetsYOffset = window.innerHeight * 0.03;
     laneHeight = (window.innerHeight - window.innerHeight * 0.3) / 5;
     laneWidth = window.innerWidth * 0.8;
+
+    let packetRatio = 348 / 216;
+    packetHeight = laneHeight * 0.7;
+    packetWidth = packetHeight * packetRatio;
+
     tileWidth = laneWidth / 9;
 
     for (let i = 0; i < maxPlants; i++) {
@@ -474,9 +538,6 @@
     //Draw Plants
     drawPlants(ctx);
 
-    //Draw Projectiles (Sun, Peas, Darts, What have you)
-    drawSunObjects(ctx);
-
     //Draw Zombies
     //put function here
 
@@ -484,15 +545,19 @@
     //put function here
 
     //Draw HUD (Seeds, Shovel, Sun Count, etc.)
-    drawSeedPackets(ctx, height, width);
+    drawSeedPackets(ctx);
     drawSunCount(ctx, height, width);
+    drawShovel(ctx, width, height);
+
+    //Draw Projectiles (Sun, Peas, Darts, What have you)
+    drawSunObjects(ctx);
   }
 
   onMount(() => {
     let eventGame = document.getElementById("game");
 
     eventGame.onmousedown = function (e) {
-      if (selectedSeed == -1) {
+      if (selectedSeed == -1 && !shovelSelect) {
         //Sun Collection Code
         for (let i = 0; i < sunToBeDrawn.length; i++) {
           const element = sunToBeDrawn[i];
@@ -511,6 +576,10 @@
             element.collected = true;
 
             sunCount = parseInt(sunCount) + element.value;
+            let Points = new Audio("audio/points.ogg");
+            Points.preservesPitch = false;
+            Points.playbackRate = 1 + Math.floor(Math.random() * 30) / 100;
+            Points.play();
           }
         }
       } else {
@@ -521,24 +590,41 @@
             }
 
             if (tileHitTest(e.clientX, e.clientY, i, j)) {
-              let audio = new Audio("audio/plant1.ogg");
-              audio.play();
+              if (selectedSeed != -1) {
+                let audio = new Audio("audio/plant1.ogg");
+                audio.play();
 
-              let selectedPlantString = Object.keys(Plants)[selectedSeed];
+                let selectedPlantString = Object.keys(Plants)[selectedSeed];
 
-              let drawObject = {
-                plant: selectedPlantString,
-                tile: [j, i],
-              };
+                let drawObject = {
+                  plant: selectedPlantString,
+                  tile: [j, i],
+                };
 
-              sunCount -= PlantSunCost[selectedSeed];
-              rechargeTime[selectedSeed][0] = 0;
+                sunCount -= PlantSunCost[selectedSeed];
+                rechargeTime[selectedSeed][0] = 0;
 
-              plantsToBeDrawn.push(drawObject);
-              plantFunctions[selectedSeed](j, i);
+                plantsToBeDrawn.push(drawObject);
+                plantFunctions[selectedSeed](j, i);
+              } else if (shovelSelect) {
+                for (let k = 0; k < plantHooks.length; k++) {
+                  const element = plantHooks[k];
+
+                  let tileX = element.coords[0];
+                  let tileY = element.coords[1];
+                  let id = element.id;
+                  if (j == tileX && i == tileY) {
+                    let audio = new Audio("audio/plant0.ogg");
+                    audio.play();
+                    plantHealthControl[id] = 0;
+                    plantsToBeDrawn.splice(id, 1);
+                  }
+                }
+              }
             }
           }
         }
+        shovelSelect = false;
       }
 
       selectedX = e.clientX;
@@ -546,26 +632,46 @@
     };
 
     eventGame.onmouseup = function (e) {
-      if (selectedSeed == -1) {
+      if (selectedSeed == -1 && !shovelSelect) {
         for (let i = 0; i < maxPlants; i++) {
-          if (PlantSunCost[i] > sunCount) {
-            break;
-          }
+          noresponse: {
+            if (PlantSunCost[i] > sunCount) {
+              break noresponse;
+            }
+            if (rechargeTime[i][0] < rechargeTime[i][1]) {
+              break noresponse;
+            }
 
-          if (rechargeTime[i][0] < rechargeTime[i][1]) {
-            break;
-          }
-          if (seedPacketHitTest(e.clientX, e.clientY, i)) {
-            selectedSeed = i;
+            if (seedPacketHitTest(e.clientX, e.clientY, i)) {
+              selectedSeed = i;
+              let seedLift = new Audio("audio/seedlift.ogg");
+              seedLift.play();
+            }
           }
         }
       } else {
         selectedSeed = -1;
       }
+
+      //Shovel Pickup
+      if (
+        shovelHitTest(
+          e.clientX,
+          e.clientY,
+          window.innerWidth,
+          window.innerHeight
+        ) &&
+        selectedSeed == -1 &&
+        !shovelSelect
+      ) {
+        let shovelAudio = new Audio("audio/shovel.ogg");
+        shovelAudio.play();
+        shovelSelect = true;
+      }
     };
 
     eventGame.onmousemove = function (e) {
-      if (selectedSeed == -1) {
+      if (selectedSeed == -1 && !shovelSelect) {
         return;
       }
 
@@ -575,12 +681,8 @@
   });
 
   function seedPacketHitTest(x, y, i) {
-    let width = window.innerWidth;
-    let height = window.innerHeight;
-    let packetStartX = boardXOffset + width * 0.12 * i;
-    let packetStartY = height * 0.01;
-    let packetWidth = width * 0.11;
-    let packetHeight = laneHeight;
+    let packetStartX = packetsXOffset + (packetWidth+packetSeperation) * i;
+    let packetStartY = packetsYOffset;
     return (
       x >= packetStartX &&
       x <= packetStartX + packetWidth &&
@@ -606,18 +708,35 @@
     return x >= sunx && x <= sunx + width && y > suny && y <= suny + height;
   }
 
+  function shovelHitTest(x, y, width, height) {
+    let shovelStartX = packetsXOffset + (packetWidth+packetSeperation) * maxPlants;
+    let shovelStartY = height * 0.05;
+    return (
+      x >= shovelStartX &&
+      x <= shovelStartX + width * 0.04 &&
+      y >= shovelStartY &&
+      y <= shovelStartY + width * 0.04
+    );
+  }
+
   setInterval(() => {
     update();
     draw();
   }, 1000 / FPS);
 
   //PLANT LOOPS.  I literally am going to go insane.  I need to debug these each INDIVIDUALLY.  Like some are similar but this is going to be hell.
-  const plantFunctions = [sunflower];
+  const plantFunctions = [sunflower, peashooter];
   var plants = [];
+  var plantHooks = [];
   var plantHealthControl = [];
   var plantActionTimers = [];
 
   function sunflower(tileX, tileY) {
+    plantHooks.push({
+      coords: [tileX, tileY],
+      id: plants.length,
+      type: Plants.SUNFLOWER,
+    });
     plants.push(
       setInterval(sunflowerCallback, 1000 / FPS, tileX, tileY, plants.length)
     );
@@ -628,12 +747,16 @@
   function sunflowerCallback(tileX, tileY, id) {
     let tileStartX = boardXOffset + tileX * tileWidth;
     let tileStartY = tileY * laneHeight + boardYOffset;
-    let plantXOffset = tileWidth * 0.2;
+    let plantXOffset =
+      tileWidth * 0.5 -
+      (laneHeight * 0.9 * PlantSpriteSizeRatio[plantHooks[id].type]) / 2;
     let plantYOffset = laneHeight * 0.06;
 
-    if (plantActionTimers[id][0] >= plantActionTimers[id][1]) {
+    if (plantHealthControl[id] == 0) {
+      clearInterval(plants[id]);
+    } else if (plantActionTimers[id][0] >= plantActionTimers[id][1]) {
       sunToBeDrawn.push({
-        posX: tileStartX + plantXOffset + 50,
+        posX: tileStartX + plantXOffset,
         posY: tileStartY + plantYOffset,
         width: 100,
         height: 100,
@@ -648,6 +771,21 @@
       plantActionTimers[id][0] += 1;
     }
   }
+
+  function peashooter(tileX, tileY) {
+    plantHooks.push({
+      coords: [tileX, tileY],
+      id: plants.length,
+      type: Plants.PEASHOOTER,
+    });
+    plants.push(
+      setInterval(peashooterCallback, 1000 / FPS, tileX, tileY, plants.length)
+    );
+    plantHealthControl.push(PlantHealth.PEASHOOTER);
+    plantActionTimers.push([0, Math.floor(Math.random() * 9) + 81]);
+  }
+
+  function peashooterCallback(tileX, tileY, id) {}
 </script>
 
 <div id="gameWrapper">
