@@ -380,11 +380,11 @@ function instance($$self, $$props, $$invalidate) {
 		boardYOffset = window.innerHeight * 0.2;
 		packetsXOffset = window.innerWidth * 0.1;
 		packetSeperation = window.innerWidth * 0.005;
-		packetsYOffset = window.innerHeight * 0.03;
+		packetsYOffset = window.innerHeight * 0.04;
 		laneHeight = (window.innerHeight - window.innerHeight * 0.3) / 5;
 		laneWidth = window.innerWidth * 0.8;
 		let packetRatio = 348 / 216;
-		packetHeight = laneHeight * 0.7;
+		packetHeight = laneHeight * 0.6;
 		packetWidth = packetHeight * packetRatio;
 		tileWidth = laneWidth / 9;
 
@@ -484,49 +484,64 @@ function instance($$self, $$props, $$invalidate) {
 		let eventGame = document.getElementById("game");
 
 		eventGame.onmousedown = function (e) {
-			if (selectedSeed == -1 && !shovelSelect) {
-				//Sun Collection Code
-				for (let i = 0; i < sunToBeDrawn.length; i++) {
-					const element = sunToBeDrawn[i];
-
-					if (sunHitTest(e.clientX, e.clientY, element.posX, element.posY, element.width, element.height) && !element.collected) {
-						element.collected = true;
-						$$invalidate(1, sunCount = parseInt(sunCount) + element.value);
-						let Points = new Audio("audio/points.ogg");
-						Points.preservesPitch = false;
-						Points.playbackRate = 1 + Math.floor(Math.random() * 30) / 100;
-						Points.play();
-					}
+			right_click_exit: {
+				if (e.button == 2) {
+					shovelSelect = false;
+					selectedSeed = -1;
+					break right_click_exit;
 				}
-			} else {
-				for (let i = 0; i < lanes.length; i++) {
-					for (let j = 0; j < 9; j++) {
-						if (lanes[i] == "dirt") {
-							break;
+
+				if (selectedSeed == -1 && !shovelSelect) {
+					//Sun Collection Code
+					sun_collected: {
+						for (let i = 0; i < sunToBeDrawn.length; i++) {
+							const element = sunToBeDrawn[i];
+
+							if (sunHitTest(e.clientX, e.clientY, element.posX, element.posY, element.width, element.height) && !element.collected) {
+								element.collected = true;
+								$$invalidate(1, sunCount = parseInt(sunCount) + element.value);
+								let Points = new Audio("audio/points.ogg");
+								Points.preservesPitch = false;
+								Points.playbackRate = 1 + Math.floor(Math.random() * 30) / 100;
+								Points.play();
+								break sun_collected;
+							}
 						}
+					}
+				} else {
+					action_completed: {
+						for (let i = 0; i < lanes.length; i++) {
+							for (let j = 0; j < 9; j++) {
+								if (lanes[i] == "dirt") {
+									break;
+								}
 
-						if (tileHitTest(e.clientX, e.clientY, i, j)) {
-							if (selectedSeed != -1) {
-								let audio = new Audio("audio/plant1.ogg");
-								audio.play();
-								let selectedPlantString = Object.keys(Plants)[selectedSeed];
-								let drawObject = { plant: selectedPlantString, tile: [j, i] };
-								$$invalidate(1, sunCount -= PlantSunCost[selectedSeed]);
-								rechargeTime[selectedSeed][0] = 0;
-								plantsToBeDrawn.push(drawObject);
-								plantFunctions[selectedSeed](j, i);
-							} else if (shovelSelect) {
-								for (let k = 0; k < plantHooks.length; k++) {
-									const element = plantHooks[k];
-									let tileX = element.coords[0];
-									let tileY = element.coords[1];
-									let id = element.id;
-
-									if (j == tileX && i == tileY) {
-										let audio = new Audio("audio/plant0.ogg");
+								if (tileHitTest(e.clientX, e.clientY, i, j)) {
+									if (selectedSeed != -1) {
+										let audio = new Audio("audio/plant1.ogg");
 										audio.play();
-										plantHealthControl[id] = 0;
-										plantsToBeDrawn.splice(id, 1);
+										let selectedPlantString = Object.keys(Plants)[selectedSeed];
+										let drawObject = { plant: selectedPlantString, tile: [j, i] };
+										$$invalidate(1, sunCount -= PlantSunCost[selectedSeed]);
+										rechargeTime[selectedSeed][0] = 0;
+										plantsToBeDrawn.push(drawObject);
+										plantFunctions[selectedSeed](j, i);
+										break action_completed;
+									} else if (shovelSelect) {
+										for (let k = 0; k < plantHooks.length; k++) {
+											const element = plantHooks[k];
+											let tileX = element.coords[0];
+											let tileY = element.coords[1];
+											let id = element.id;
+
+											if (j == tileX && i == tileY) {
+												let audio = new Audio("audio/plant0.ogg");
+												audio.play();
+												plantHealthControl[id] = 0;
+												plantsToBeDrawn.splice(id, 1);
+												break action_completed;
+											}
+										}
 									}
 								}
 							}
@@ -534,11 +549,9 @@ function instance($$self, $$props, $$invalidate) {
 					}
 				}
 
-				shovelSelect = false;
+				selectedX = e.clientX;
+				selectedY = e.clientY;
 			}
-
-			selectedX = e.clientX;
-			selectedY = e.clientY;
 		};
 
 		eventGame.onmouseup = function (e) {
@@ -579,6 +592,13 @@ function instance($$self, $$props, $$invalidate) {
 
 			selectedX = e.clientX;
 			selectedY = e.clientY;
+		};
+
+		document.onkeydown = function (e) {
+			if (e.code.toLowerCase() == "escape") {
+				shovelSelect = false;
+				selectedSeed = -1;
+			}
 		};
 	});
 
@@ -628,7 +648,7 @@ function instance($$self, $$props, $$invalidate) {
 		plants.push(setInterval(sunflowerCallback, 1000 / FPS, tileX, tileY, plants.length));
 		plantHealthControl.push(PlantHealth.SUNFLOWER);
 		plantActionTimers.push([0, Math.floor(Math.random() * 240) + 1920]);
-	}
+	} // plantActionTimers.push([0, 60]);
 
 	function sunflowerCallback(tileX, tileY, id) {
 		let tileStartX = boardXOffset + tileX * tileWidth;
@@ -653,7 +673,7 @@ function instance($$self, $$props, $$invalidate) {
 			plantActionTimers[id][0] = 0;
 			plantActionTimers[id][1] = Math.floor(Math.random() * 240) + 1920;
 		} else if (plantActionTimers[id][0] < plantActionTimers[id][1]) {
-			plantActionTimers[id][0] += 1;
+			plantActionTimers[id][0] += 1; // plantActionTimers[id][1] = 60;
 		}
 	}
 
