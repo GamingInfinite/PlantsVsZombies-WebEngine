@@ -70,7 +70,7 @@ function instance($$self, $$props, $$invalidate) {
 	let { boardType } = $$props;
 	let { allowPick = false } = $$props;
 	let { maxPlants = 10 } = $$props;
-	let { setPicks = [Plants.SUNFLOWER, Plants.PEASHOOTER] } = $$props;
+	let { setPicks = [Plants.PEASHOOTER, Plants.SUNFLOWER] } = $$props;
 	let { sunCount = 50 } = $$props;
 	let rechargeTime = [];
 	let sunFall = [0, 600];
@@ -257,7 +257,7 @@ function instance($$self, $$props, $$invalidate) {
 	//Drawing Seed Packets
 	function drawSeedPackets(ctx) {
 		for (let i = 0; i < maxPlants; i++) {
-			if (selectedSeed == i) {
+			if (selectedSeed == setPicks[i]) {
 				ctx.globalAlpha = 0.5;
 				drawPacket(ctx, i);
 				ctx.globalAlpha = 1;
@@ -523,7 +523,7 @@ function instance($$self, $$props, $$invalidate) {
 										let selectedPlantString = Object.keys(Plants)[selectedSeed];
 										let drawObject = { plant: selectedPlantString, tile: [j, i] };
 										$$invalidate(1, sunCount -= PlantSunCost[selectedSeed]);
-										rechargeTime[selectedSeed][0] = 0;
+										rechargeTime[setPicks[selectedSeed]][0] = 0;
 										plantsToBeDrawn.push(drawObject);
 										plantFunctions[selectedSeed](j, i);
 										break action_completed;
@@ -558,7 +558,7 @@ function instance($$self, $$props, $$invalidate) {
 			if (selectedSeed == -1 && !shovelSelect) {
 				for (let i = 0; i < maxPlants; i++) {
 					noresponse: {
-						if (PlantSunCost[i] > sunCount) {
+						if (PlantSunCost[setPicks[i]] > sunCount) {
 							break noresponse;
 						}
 
@@ -567,7 +567,7 @@ function instance($$self, $$props, $$invalidate) {
 						}
 
 						if (seedPacketHitTest(e.clientX, e.clientY, i)) {
-							selectedSeed = i;
+							selectedSeed = setPicks[i];
 							let seedLift = new Audio("audio/seedlift.ogg");
 							seedLift.play();
 						}
@@ -586,10 +586,6 @@ function instance($$self, $$props, $$invalidate) {
 		};
 
 		eventGame.onmousemove = function (e) {
-			if (selectedSeed == -1 && !shovelSelect) {
-				return;
-			}
-
 			selectedX = e.clientX;
 			selectedY = e.clientY;
 		};
@@ -598,6 +594,39 @@ function instance($$self, $$props, $$invalidate) {
 			if (e.code.toLowerCase() == "escape") {
 				shovelSelect = false;
 				selectedSeed = -1;
+			}
+
+			let digitKeys = [
+				"digit1",
+				"digit2",
+				"digit3",
+				"digit4",
+				"digit5",
+				"digit6",
+				"digit7",
+				"digit8",
+				"digit9",
+				"digit0"
+			];
+
+			for (let i = 0; i < digitKeys.length; i++) {
+				noresponse: {
+					if (e.code.toLowerCase() == digitKeys[i]) {
+						console.log("lol");
+
+						if (PlantSunCost[setPicks[i]] > sunCount) {
+							break noresponse;
+						}
+
+						if (rechargeTime[i][0] < rechargeTime[i][1]) {
+							break noresponse;
+						}
+
+						selectedSeed = setPicks[i];
+						let seedLift = new Audio("audio/seedlift.ogg");
+						seedLift.play();
+					}
+				}
 			}
 		};
 	});
