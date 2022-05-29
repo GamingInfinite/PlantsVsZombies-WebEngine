@@ -11,6 +11,7 @@
     PlantSunCost,
     PlantRechargeTime,
     PlantHealth,
+    ProjectileSprites,
   } from "../enums.ts";
 
   export let boardType;
@@ -101,6 +102,7 @@
   var loadedPorts = [];
   var resourceImages = [];
   var extraIcons = [];
+  var projectiles = [];
 
   var seedPortaits = [
     PacketPortraitPaths.SUNFLOWER,
@@ -111,6 +113,7 @@
   var plantAnims = [];
 
   function drawRotated(ctx, degrees, img, x, y, width, height) {
+    ctx.save();
     let radians = (degrees * Math.PI) / 180;
     let xtranslate = x + width / 2;
     let ytranslate = y + height / 2;
@@ -118,6 +121,7 @@
     ctx.rotate(radians);
     ctx.translate(-xtranslate, -ytranslate);
     ctx.drawImage(img, x, y, width, height);
+    ctx.restore();
   }
 
   function loadImages() {
@@ -150,6 +154,14 @@
         }
       }
       plantAnims.push(plantIdle);
+    }
+
+    for (let i = 0; i < ProjectileSprites.length; i++) {
+      const element = ProjectileSprites[i];
+      let proj = new Image();
+      proj.src = element;
+
+      projectiles.push(proj);
     }
   }
 
@@ -351,6 +363,7 @@
 
   var plantsToBeDrawn = [];
   var sunToBeDrawn = [];
+  var projectilesTBD = [];
 
   //Drawing Plants | Add support for animations later !!IMPORTANT!!
   function drawPlants(ctx) {
@@ -391,6 +404,30 @@
 
       ctx.globalAlpha = 1 - element.lifetime[0] / element.lifetime[1];
       ctx.drawImage(img, sunPositionX, sunPositionY, sunWidth, sunHeight);
+    }
+  }
+
+  //Draw Projectiles From Plants
+  function drawProjectiles(ctx) {
+    for (let i = 0; i < projectilesTBD.length; i++) {
+      const element = projectilesTBD[i];
+
+      let type = element.type;
+      let projX = element.posX;
+      let projY = element.posY;
+      let width = element.width;
+      let height = element.height;
+      let rotation = element.rotation;
+
+      drawRotated(
+        ctx,
+        rotation,
+        projectiles[type],
+        projX,
+        projY,
+        width,
+        height
+      );
     }
   }
 
@@ -517,7 +554,7 @@
           element.posX -= 1 * (element.posX / (window.innerWidth * 0.003));
         }
         if (element.posY < window.innerHeight * 0.025) {
-          element.posY += 2 * (element.posY / (window.innerHeight * 0.025));
+          element.posY += 2;
         } else if (element.posY > window.innerHeight * 0.025) {
           element.posY -= 2 * (element.posY / (window.innerHeight * 0.025));
         }
@@ -537,6 +574,27 @@
       } else if (element.lifetime[1] == -1) {
       } else if (element.lifetime[0] == element.lifetime[1]) {
         sunToBeDrawn.splice(i, 1);
+      }
+    }
+
+    for (let i = 0; i < projectilesTBD.length; i++) {
+      const element = projectilesTBD[i];
+
+      element.posX += element.velocity;
+
+      if (element.type == 0) {
+        let tileStartY = element.tile[1] * laneHeight + boardYOffset;
+        let projYOffset = laneHeight * 0.2;
+
+        let projWH = laneHeight * 0.3;
+
+        element.posY = tileStartY + projYOffset;
+        element.width = projWH;
+        element.height = projWH;
+      }
+
+      if (element.posX > window.innerWidth) {
+        projectilesTBD.splice(i, 1);
       }
     }
   }
@@ -574,6 +632,7 @@
 
     //Draw Projectiles (Sun, Peas, Darts, What have you)
     drawSunObjects(ctx);
+    drawProjectiles(ctx);
   }
 
   onMount(() => {
@@ -744,7 +803,6 @@
       for (let i = 0; i < digitKeys.length; i++) {
         noresponse: {
           if (e.code.toLowerCase() == digitKeys[i]) {
-            console.log("lol");
             if (PlantSunCost[setPicks[i]] > sunCount) {
               break noresponse;
             }
@@ -868,7 +926,38 @@
     plantActionTimers.push([0, Math.floor(Math.random() * 9) + 81]);
   }
 
-  function peashooterCallback(tileX, tileY, id) {}
+  function peashooterCallback(tileX, tileY, id) {
+    let tileStartX = boardXOffset + tileX * tileWidth;
+    let tileStartY = tileY * laneHeight + boardYOffset;
+    let projXOffset = tileWidth * 0.66;
+    let projYOffset = laneHeight * 0.2;
+
+    let projWH = laneHeight * 0.3;
+
+    if (plantHealthControl[id] == 0) {
+      clearInterval(plants[id]);
+    } else if (plantActionTimers[id][0] >= plantActionTimers[id][1]) {
+      //Projectile Code Here
+      projectilesTBD.push({
+        type: 0,
+        tile: [tileX, tileY],
+        posX: tileStartX + projXOffset,
+        posY: tileStartY + projYOffset,
+        width: projWH,
+        height: projWH,
+        velocity: 13,
+        arcOffset: 0,
+        rotation: 0,
+        rotationSpeed: 0,
+        damage: 20,
+      });
+
+      plantActionTimers[id][0] = 0;
+      plantActionTimers[id][1] = Math.floor(Math.random() * 9) + 81;
+    } else if (plantActionTimers[id][0] < plantActionTimers[id][1]) {
+      plantActionTimers[id][0] += 1;
+    }
+  }
 </script>
 
 <div id="gameWrapper">
