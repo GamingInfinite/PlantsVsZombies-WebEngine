@@ -25,3 +25,9 @@ export const PlantAnimPaths = [
   "images/plants/sunflower/",
   "images/plants/peashooter/"
 ];
+export const ProjectileSprites = [
+  "images/projectiles/pea.png",
+  "images/projectiles/cabbage.png",
+  "images/projectiles/kernel.png",
+  "images/projectiles/melon.png"
+];

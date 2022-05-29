@@ -26,7 +26,7 @@ function create_fragment(ctx) {
 
 	function switch_props(ctx) {
 		return {
-			props: { boardType: "frontLawn", sunCount: "50" }
+			props: { boardType: "frontLawn", sunCount: "100" }
 		};
 	}
 
