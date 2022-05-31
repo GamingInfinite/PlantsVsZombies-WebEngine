@@ -680,9 +680,14 @@
                 if (lanes[i] == "dirt") {
                   break;
                 }
-
                 if (tileHitTest(e.clientX, e.clientY, i, j)) {
                   if (selectedSeed != -1) {
+                    for (let k = 0; k < plantsToBeDrawn.length; k++) {
+                      const element = plantsToBeDrawn[k];
+                      if (element.tile[0] == j && element.tile[1] == i) {
+                        break right_click_exit;
+                      }
+                    }
                     let audio = new Audio("audio/plant1.ogg");
                     audio.play();
 
@@ -701,18 +706,30 @@
                     break action_completed;
                   } else if (shovelSelect) {
                     for (let k = 0; k < plantHooks.length; k++) {
-                      const element = plantHooks[k];
+                      plantisdead: {
+                        const element = plantHooks[k];
 
-                      let tileX = element.coords[0];
-                      let tileY = element.coords[1];
-                      let id = element.id;
-                      if (j == tileX && i == tileY) {
-                        let audio = new Audio("audio/plant0.ogg");
-                        audio.play();
-                        plantHealthControl[id] = 0;
-                        plantsToBeDrawn.splice(id, 1);
-                        shovelSelect = false;
-                        break action_completed;
+                        if (element.isDead) {
+                          break plantisdead;
+                        }
+
+                        let tileX = element.coords[0];
+                        let tileY = element.coords[1];
+                        let id = element.id;
+                        if (tileX == j && tileY == i) {
+                          let audio = new Audio("audio/plant0.ogg");
+                          audio.play();
+                          plantHealthControl[id] = 0;
+                          for (let l = 0; l < plantsToBeDrawn.length; l++) {
+                            const element = plantsToBeDrawn[l];
+                            if (element.tile[0] == j && element.tile[1] == i) {
+                              plantsToBeDrawn.splice(l, 1);
+                            }
+                          }
+                          element.isDead = !element.isDead;
+                          shovelSelect = false;
+                          break action_completed;
+                        }
                       }
                     }
                   }
@@ -875,6 +892,7 @@
       coords: [tileX, tileY],
       id: plants.length,
       type: Plants.SUNFLOWER,
+      isDead: false,
     });
     plants.push(
       setInterval(sunflowerCallback, 1000 / FPS, tileX, tileY, plants.length)
@@ -918,6 +936,7 @@
       coords: [tileX, tileY],
       id: plants.length,
       type: Plants.PEASHOOTER,
+      isDead: false,
     });
     plants.push(
       setInterval(peashooterCallback, 1000 / FPS, tileX, tileY, plants.length)
