@@ -804,6 +804,11 @@
         isFullscreen = true;
       }
 
+      if (e.code.toLowerCase() == "keys") {
+        //Remapable keys later
+        shovelSelect = !shovelSelect;
+      }
+
       let digitKeys = [
         "digit1",
         "digit2",
